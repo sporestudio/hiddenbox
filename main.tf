@@ -18,10 +18,8 @@ terraform {
 
 
 provider "aws" {
-    access_key = var.aws_access_key_id
-    secret_key = var.aws_secret_access_key
-    token      = var.aws_session_token
-    region     = var.region
+    shared_credentials_files = [ "~/.aws/credentials" ]
+    region                   = var.region
 }
 
 data "aws_vpc" "default" {
@@ -87,7 +85,7 @@ resource "aws_security_group" "storage_nodes" {
 }
 
 
-# Security group
+# Security group for main node
 resource "aws_security_group" "main" {
     name = "main_node_sg"
     description = "Security group for main node"
@@ -145,7 +143,7 @@ resource "aws_security_group" "main" {
 }
 
 
-# Key pair
+# Key pair for SSH access
 resource "aws_key_pair" "main" {
     key_name   = "main"
     public_key = file(var.ssh_public_key_path)
@@ -169,7 +167,6 @@ resource "aws_ebs_volume" "storage_volume" {
 
 # Main instance used to API, database and other services
 resource "aws_instance" "main" {
-    count                   = var.instances_amount
     ami                     = var.ubuntu_ami
     instance_type           = var.main_instance_type
     key_name                = aws_key_pair.main.key_name
