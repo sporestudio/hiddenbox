@@ -25,7 +25,7 @@ variable "region" {
 variable "ubuntu_ami" {
   description = "Ubuntu 22.04 AMI ID"
   type        = string
-  default     = "ami-03f65b8614a860c29"
+  default     = "ami-0f9575d3d509bae0c"
 }
 
 variable "user" {
