@@ -1,0 +1,47 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    autoclean: true
+    autoremove: true
+    force_apt_get: true
+    update_cache: true
+    upgrade: "yes"
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: "present"
+  loop:
+    - curl
+    - wget
+    - vim
+    - htop
+    - net-tools
+    - python3-pip
+    - git
+    - unzip
+    - gnupg
+    - lsb-release
+
+- name: Configure timezone
+  become: true
+  community.general.timezone:
+    name: Europe/Madrid
+
+- name: Configure hostname to main node
+  become: true
+  ansible.builtin.hostname:
+    name: "main-node"
+  when: inventory_hostname in groups['main']
+
+- name: Configure hostname for storage modules
+  become: true
+  ansible.builtin.hostname:
+    name: "storage-node-{{ inventory_hostname | regex_replace('storage', '') }}"
+  when: inventory_hostname in groups['storage']
+
+- name: Create scripts directory
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: "directory"
+    mode: "755"
