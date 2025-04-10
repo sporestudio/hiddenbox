@@ -35,8 +35,10 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Ignore virtual environment
-spotify-terraform/
+# Ignore cargo files
+*/cargo/*
+*/Cargo.lock
+*/target/*
 
 
 TODO*
