@@ -35,10 +35,23 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Ignore virtual environment
-spotify-terraform/
+# Ignore python virtual environments
+# https://docs.python.org/3/tutorial/venv.html
+*/venv/*
+
+# Ignore python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg 
 
 
+# Ignore personal files
 TODO*
 
+# Ignore visual studio code settings
 */.vscode/*
+.vscode/*
