@@ -1,0 +1,30 @@
+---
+- name: Update all packages to their lastest version
+  ansible.builtin.apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 3600
+    autoremove: yes
+    autoclean: yes
+    force_apt_get: yes
+    state: latest
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - curl
+    - wget
+    - vim
+    - git
+    - unzip
+    - htop
+    - gnupg
+    - net-tools
+    - python3-pip
+  
+- name: Configure timezone
+  ansible.builtin.timedatectl:
+    timezone: "{{ timezone }}"
+    ntp: yes
