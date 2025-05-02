@@ -43,8 +43,12 @@ __pycache__/
 # Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints
 
+# Ignore local env files
+.env
 
+# Ignore personal files
 TODO*
 
+# Ignore local IDE files
 */.vscode/*
 .vscode/*
