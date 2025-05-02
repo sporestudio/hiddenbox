@@ -8,5 +8,12 @@ services:
     ports:
       - "6379:6379"
 
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+
 volumes:
   data:
