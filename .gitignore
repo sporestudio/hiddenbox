@@ -35,10 +35,13 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Ignore cargo files
-*/cargo/*
-*/Cargo.lock
-*/target/*
+# Ignore pycache
+__pycache__/
+*/__pycache__/
+# Ignore Python bytecode
+*.py[cod]
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints
 
 
 TODO*
