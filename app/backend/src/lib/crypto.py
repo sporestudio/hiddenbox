@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, uuid, base64, json
+import os, uuid, time, base64, json
 from cryptography.fernet import Fernet
 import redis
 
@@ -47,7 +47,7 @@ class Crypto:
         self.redis.hset(f"file:{file_id}", mapping={
             "user_id": user_id,
             "key": key.decode(),
-            "created_at": str(int(os.time()))
+            "created_at": str(int(time.time()))
         })
 
         # List with the fragments of the file
