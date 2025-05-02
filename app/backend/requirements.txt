@@ -1,0 +1,4 @@
+cffi==1.17.1
+cryptography==44.0.2
+pycparser==2.22
+redis==5.2.1
