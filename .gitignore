@@ -41,6 +41,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Ignore virtual environments
+*/*/venv/*
+
 # Ignore pycache
 __pycache__/
 */__pycache__/
