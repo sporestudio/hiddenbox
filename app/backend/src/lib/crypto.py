@@ -3,7 +3,7 @@
 
 import uuid 
 from typing import List
-from datetime import datetime   
+from datetime import datetime, timezone   
 from .datatypes import FileFragment, EncryptedFile
 from cryptography.fernet import Fernet
 
@@ -49,14 +49,14 @@ class Crypto:
             EncryptedFile: An object representing the encrypted file (data and metadata included). To see EncryptedFile attributes refer to `datatypes` module documentation.
         """
         token = self.__cipher.encrypt(file_data)  # Encrypt the file data as a Fermet's token format
-        fragments = self._fragment_file(token)
+        fragments = self._fragment_token(token)
         file_uuid = str(uuid.uuid4())
 
         encrypted_file = EncryptedFile(
             uuid=file_uuid,
             user_id=user_id,
             key=self.__key,
-            created_at=str(int(datetime.timezone.utc.timestamp())),
+            created_at=str(int(datetime.now(timezone.utc).timestamp())),
             fragments=fragments
         )
 
