@@ -27,20 +27,20 @@ def user_id():
     return "user_id"
 
 @pytest.fixture
-def token(key, data):
-    return Fernet(key).encrypt(data)
-
-@pytest.fixture
-def fragments(crypto, token):
-    return crypto._fragment_token(token)
-
-@pytest.fixture
 def data():
     """
     Generate random test data of random size in megabytes (from 1 to 10 MB).
     """
     size_mb = random.uniform(1.0, 10.0)
     return os.urandom(int(size_mb * 1024 * 1024))
+
+@pytest.fixture
+def token(key, data):
+    return Fernet(key).encrypt(data)
+
+@pytest.fixture
+def fragments(crypto, token):
+    return crypto._fragment_token(token)
 
 # ----------------------
 # Tests
@@ -81,15 +81,6 @@ def test_fragments_has_correct_size(fragments, crypto):
         assert len(f.data) == crypto._FRAGMENT_SIZE
 
     assert len(fragments[-1].data) <= crypto._FRAGMENT_SIZE
-
-def test_decryption_returns_original_data(crypto, data, user_id):
-    """
-    Ensure the encrypted data can be decrypted back to its original form
-    """
-    encrypted_data = crypto.encrypt_file(data, user_id)
-    decrypted_data = crypto.decrypt_fragmented_file(encrypted_data.fragments)
-
-    assert decrypted_data == data
 
 def test_encrypt_then_decrypt_restores_original_data(crypto, data, user_id):
     """
