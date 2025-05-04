@@ -42,11 +42,11 @@ override.tf.json
 terraform.rc
 
 # Ignore virtual environments
-*/*/venv/*
+*venv*
 
 # Ignore pycache
-__pycache__/
-*/__pycache__/
+*__pycache__*
+
 # Ignore Python bytecode
 *.py[cod]
 # Ignore Jupyter Notebook checkpoints
