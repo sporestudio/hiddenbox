@@ -10,6 +10,8 @@ from cryptography.fernet import Fernet, InvalidToken
 from app.backend.src.lib.crypto import Crypto
 from app.backend.src.lib.datatypes import FileFragment, EncryptedFile
 
+_BYTES_PER_MB = 1024 * 1024
+
 # ----------------------
 # Fixtures
 # ----------------------
@@ -27,12 +29,17 @@ def user_id():
     return "user_id"
 
 @pytest.fixture
-def data():
+def data(request):
     """
-    Generate random test data of random size in megabytes (from 1 to 10 MB).
+    Generate random test data of random size in megabytes. The size range will be defined within the variable size_range.
     """
-    size_mb = random.uniform(1.0, 10.0)
-    return os.urandom(int(size_mb * 1024 * 1024))
+    size_range = (1.0, 10.0)
+    size = getattr(request, "param", None)
+
+    if size is None:
+        size = random.uniform(*size_range)
+
+    return os.urandom(int(size * _BYTES_PER_MB))
 
 @pytest.fixture
 def token(key, data):
@@ -117,32 +124,30 @@ def test_encrypt_empty_file(crypto, user_id):
 
     assert decrypted_data == empty_file
 
-def test_encrypt_large_file_generates_multiple_fragments(crypto, user_id):
+@pytest.mark.parametrize("data", [20.0, 40.0], indirect=True)
+def test_encrypt_large_file_generates_multiple_fragments(crypto, user_id, data):
     """
-    Check that encrypting a large file results in multiple fragments as expected
+    Check that encrypting large files results in multiple fragments as expected
     """
-    file_data = os.urandom(int(20.0 * 1024 * 1024))  # 20 MB
-    encrypted_file = crypto.encrypt_file(file_data, user_id)
+    encrypted_file = crypto.encrypt_file(data, user_id)
 
     assert len(encrypted_file.fragments) > 1
 
-def test_decryption_works_even_fragment_disordered(crypto, user_id):
+def test_decryption_works_even_fragment_disordered(crypto, user_id, data):
     """
     Confirm that decryption still works when fragments are provided in a different order
     """
-    file_data = os.urandom(int(1.0 * 1024 * 1024))
-    encrypted_file = crypto.encrypt_file(file_data, user_id)
+    encrypted_file = crypto.encrypt_file(data, user_id)
 
     reversed_fragments = list(reversed(encrypted_file.fragments))
     decrypted_data = crypto.decrypt_fragmented_file(reversed_fragments)
-    assert decrypted_data == file_data
+    assert decrypted_data == data
 
-def test_decryption_fails_on_modified_fragment(crypto, user_id):
+def test_decryption_fails_on_modified_fragment(crypto, user_id, data):
     """
     Verify that tampering with a fragment causes decryption to fail with an InvalidToken error
     """
-    file_data = os.urandom(int(1.0 * 1024 * 1024))
-    encrypted_file = crypto.encrypt_file(file_data, user_id)
+    encrypted_file = crypto.encrypt_file(data, user_id)
     fragments = encrypted_file.fragments
 
     corrupted_data = bytearray(fragments[0].data)
