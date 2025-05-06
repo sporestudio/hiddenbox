@@ -36,7 +36,7 @@ class RedisService:
         for f in fragments:
             self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
 
-    def get_metadata(self, file_uuid: str) -> Dict:
+    def get_metadata(self, file_uuid: str) -> dict[str, str]:
         """
         Load file metadata from Redis database.
 
@@ -53,7 +53,7 @@ class RedisService:
 
         return {k.decode(): v.decode() for k,v in data.items()}
     
-    def get_fragments(self, file_uuid: str) -> List:
+    def get_fragments(self, file_uuid: str) -> list[FileFragment]:
         """
         Get the stored fragments files from Redis database.
 
