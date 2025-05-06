@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import redis
-from typing import List, Dict
 
 class RedisService:
     def __init__(self, url):
