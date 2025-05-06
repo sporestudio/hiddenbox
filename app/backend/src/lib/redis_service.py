@@ -30,12 +30,12 @@ class RedisService:
 
         Args:
             file_uuid (str): file's unique identifier
-            fragments (list): list of tuples with the fragment's index and the fragment itself
+            fragments (list[FileFragments]): list of FileFragments files objects
         """
-        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(idx) for idx, _ in fragments])
-
-        for idx, frag in fragments:
-            self._redis.set(f"fragment:{file_uuid}:{idx}", frag)
+        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(f.index) for f in fragments])
+    
+        for f in fragments:
+            self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
 
     def get_metadata(self, file_uuid: str) -> Dict:
         """
@@ -62,14 +62,14 @@ class RedisService:
             file_uuid (str): file's unique identifier
 
         Returns:
-            List: A list of tuples with the fragment's index and the fragment itself.
+            list[FileFragments]: list of FileFragments files objects
         """
         idxs = self._redis.lrange(f"file:{file_uuid}:fragments", 0, -1)
         result = []
 
         for binary_idx in idxs:
             idx = int(binary_idx.decode())
-            frag = self._redis.get(f"fragment:{file_uuid}:{idx}")
-            result.append(idx, frag)
+            frag_data = self._redis.get(f"fragment:{file_uuid}:{idx}")
+            result.append(FileFragment(index=idx, data=frag_data))
 
         return result
