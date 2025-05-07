@@ -1,5 +1,5 @@
 pytest
 fastapi
-precommit
+pre-commit
 python-multipart
-cryptography.fernet
+cryptography
