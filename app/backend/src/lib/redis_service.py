@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import redis
-from typing import List, Dict
+from lib.datatypes import FileFragment
 
 class RedisService:
     def __init__(self, url):
@@ -30,14 +30,14 @@ class RedisService:
 
         Args:
             file_uuid (str): file's unique identifier
-            fragments (list): list of tuples with the fragment's index and the fragment itself
+            fragments (list[FileFragments]): list of FileFragments files objects
         """
-        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(idx) for idx, _ in fragments])
+        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(f.index) for f in fragments])
+    
+        for f in fragments:
+            self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
 
-        for idx, frag in fragments:
-            self._redis.set(f"fragment:{file_uuid}:{idx}", frag)
-
-    def get_metadata(self, file_uuid: str) -> Dict:
+    def get_metadata(self, file_uuid: str) -> dict[str, str]:
         """
         Load file metadata from Redis database.
 
@@ -54,7 +54,7 @@ class RedisService:
 
         return {k.decode(): v.decode() for k,v in data.items()}
     
-    def get_fragments(self, file_uuid: str) -> List:
+    def get_fragments(self, file_uuid: str) -> list[FileFragment]:
         """
         Get the stored fragments files from Redis database.
 
@@ -62,14 +62,14 @@ class RedisService:
             file_uuid (str): file's unique identifier
 
         Returns:
-            List: A list of tuples with the fragment's index and the fragment itself.
+            list[FileFragments]: list of FileFragments files objects
         """
         idxs = self._redis.lrange(f"file:{file_uuid}:fragments", 0, -1)
         result = []
 
         for binary_idx in idxs:
             idx = int(binary_idx.decode())
-            frag = self._redis.get(f"fragment:{file_uuid}:{idx}")
-            result.append(idx, frag)
+            frag_data = self._redis.get(f"fragment:{file_uuid}:{idx}")
+            result.append(FileFragment(index=idx, data=frag_data))
 
         return result
