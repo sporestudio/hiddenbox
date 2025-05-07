@@ -2,19 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import uuid 
-from typing import List
 from datetime import datetime, timezone   
 from .datatypes import FileFragment, EncryptedFile
 from cryptography.fernet import Fernet
 
 class Crypto:
-    _FRAGMENT_SIZE = 1024 ** 2 # 1MB
+    _FRAGMENT_SIZE = 1024 * 1024 # 1MB
 
     def __init__(self, key):
         self.__key = key 
         self.__cipher = Fernet(self.__key)
 
-    def _fragment_token(self, token: bytes) -> List[FileFragment]:
+    def _fragment_bytes(self, token: bytes) -> list[FileFragment]:
         """
         Fragment a tokenized (encrypted) file into smaller chunks. Each chunk is represented as a dictionary.
 
@@ -22,7 +21,7 @@ class Crypto:
             token (bytes): The file encrypted using Fernet's token format.
 
         Returns:
-            List[FileFragment]: A list of file fragments. To see FileFragment attributes refer to `datatypes` module documentation.
+            list[FileFragment]: A list of file fragments. To see FileFragment attributes refer to `datatypes` module documentation.
         """
         fragments = []
         fragment_uuid = str(uuid.uuid4())
@@ -37,7 +36,7 @@ class Crypto:
         
         return fragments
 
-    def encrypt_file(self, file_data: bytes, user_id: str) -> EncryptedFile:
+    def encrypt(self, file_data: bytes, user_id: str) -> EncryptedFile:
         """
         Encrypt a file and associate it with the user's ID. The file is fragmented into smaller chunks.
         
@@ -49,7 +48,7 @@ class Crypto:
             EncryptedFile: An object representing the encrypted file (data and metadata included). To see EncryptedFile attributes refer to `datatypes` module documentation.
         """
         token = self.__cipher.encrypt(file_data)  # Encrypt the file data as a Fermet's token format
-        fragments = self._fragment_token(token)
+        fragments = self._fragment_bytes(token)
         file_uuid = str(uuid.uuid4())
 
         encrypted_file = EncryptedFile(
@@ -62,17 +61,29 @@ class Crypto:
 
         return encrypted_file
     
-    def decrypt_fragmented_file(self, fragments: List[FileFragment]) -> bytes:
+    def _defragment_bytes(self, fragments: list[FileFragment]) -> bytes:
         """
-        Decrypt a fragmented file. The fragments are combined into a single byte string and then decrypted.
+        Combine the fragments into a single byte string. The fragments are sorted by their index to ensure the correct order.
 
         Args:
-            fragments (List[FileFragment]): The list of fragments to be decrypted.
+            fragments (list[FileFragment]): The list of fragments.
+
+        Returns:
+            bytes: The defragmented data.
+        """
+        return b"".join(frag.data for frag in sorted(fragments, key=lambda f: f.index))
+
+    def decrypt(self, data: list[FileFragment] | bytes) -> bytes:
+        """
+        Decrypt a file. If the passed data is fragmented, the fragments are combined into a single byte string and then decrypted.
+
+        Args:
+            data (list[FileFragment] | bytes): The list of fragments to be decrypted.
         
         Returns:
             bytes: The decrypted file data.
         """
-        sorted_fragments = sorted(fragments, key=lambda x: x.index)  # Sort fragments by index
-        token = b"".join([frag.data for frag in sorted_fragments])
+        if isinstance(data, list):
+            data = self._defragment_bytes(data)
 
-        return self.__cipher.decrypt(token)
+        return self.__cipher.decrypt(data)
