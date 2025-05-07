@@ -7,7 +7,7 @@ from .datatypes import FileFragment, EncryptedFile
 from cryptography.fernet import Fernet
 
 class Crypto:
-    _FRAGMENT_SIZE = 1024 ** 1024 # 1MB
+    _FRAGMENT_SIZE = 1024 * 1024 # 1MB
 
     def __init__(self, key):
         self.__key = key 
