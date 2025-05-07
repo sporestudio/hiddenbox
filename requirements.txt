@@ -1,0 +1,5 @@
+pytest
+fastapi
+precommit
+python-multipart
+cryptography.fernet
