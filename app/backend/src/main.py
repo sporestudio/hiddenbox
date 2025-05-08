@@ -5,12 +5,11 @@ from typing import List
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 
 from lib.crypto import Crypto
 from cryptography.fernet import Fernet
 from lib.redis_service import RedisService
-from lib.datatypes import FileFragment, EncryptedFile
+from lib.datatypes import FileFragment, EncryptedFile, EncryptedResponse
 
 
 # ——————————————————————————————---
@@ -41,7 +40,7 @@ def get_redis() -> RedisService:
     if not REDIS_URL:
         raise RunTimeError("Redis URL not set")
     return RedisService(url=REDIS_URL)
-    
+
 
 # ——————————————————————————————————————————
 #   Create the app and add CORS middleware
@@ -56,29 +55,6 @@ app.add_middleware(
     allow_methods=["*"], 
     allow_headers=["*"],  
 )
-
-
-# ——————————————————————————————
-#   Input/Output models
-# ——————————————————————————————
-class EncryptResponse(BaseModel):
-    """
-    Response model for the encryption endpoint.
-    Contains the UUID, user ID, encryption key, creation timestamp,
-    and fragments of the encrypted file.
-
-    Attributes:
-        uuid (str): The UUID of the encrypted file.
-        user_id (str): The user ID of the owner.
-        key (str): The encryption key used for the file.
-        created_at (str): The timestamp when the file was created.
-        fragments (List[FileFragment]): A list of fragments of the encrypted file.
-    """
-    uuid: str
-    user_id: str
-    key: str
-    created_at: str
-    fragments: List[FileFragment]
 
 
 # ———————————————————-
@@ -124,7 +100,7 @@ async def upload_file(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))   
 
-    return EncryptResponse(
+    return EncryptedResponse(
         uuid=encrypted.uuid,
         user_id=encrypted.user_id,
         key=encrypted.key.decode(),
