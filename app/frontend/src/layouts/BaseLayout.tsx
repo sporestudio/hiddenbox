@@ -30,7 +30,6 @@ const BaseLayout: React.FC<{ title: string; description: string; children?: Reac
           className="fixed h-full w-full"
         />
         <Header />
-        <NavBar />
         <main className="z-10">{children}</main>
         {location.pathname !== "/login" && <NavBar />}
         <Footer />
