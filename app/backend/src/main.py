@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet
 from lib.redis_service import RedisService
 from lib.datatypes import FileFragment, EncryptedFile
 
+
 # ——————————————————————————————---
 #   Dependencies and environment
 # ——————————————————————————————---
@@ -40,6 +41,7 @@ def get_redis() -> RedisService:
     if not REDIS_URL:
         raise RunTimeError("Redis URL not set")
     return RedisService(url=REDIS_URL)
+    
 
 # ——————————————————————————————————————————
 #   Create the app and add CORS middleware
@@ -54,6 +56,7 @@ app.add_middleware(
     allow_methods=["*"], 
     allow_headers=["*"],  
 )
+
 
 # ——————————————————————————————
 #   Input/Output models
@@ -76,6 +79,7 @@ class EncryptResponse(BaseModel):
     key: str
     created_at: str
     fragments: List[FileFragment]
+
 
 # ———————————————————-
 #   /Endpoints
@@ -102,7 +106,7 @@ async def upload_file(
     """
     data = await file.read()
     try:
-        encrypted: EncryptedFile = crypto.encrypt_file(data, user_id)
+        encrypted: EncryptedFile = crypto.encrypt(data, user_id)
 
         redis.store_metadata(
             file_uuid=encrypted.uuid,
@@ -127,6 +131,7 @@ async def upload_file(
         created_at=encrypted.created_at,
         fragments=fragments_to_save,
     )
+
 
 @app.get("/download/{file_uuid}")
 async def download_file(
@@ -159,7 +164,7 @@ async def download_file(
             FileFragment(uuid=file_uuid, index=idx, data=frag) for idx, frag in raw
         ]
 
-        data = cryto.decrypt_fragmented_file(fragments)
+        data = cryto.decrypt(fragments)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
