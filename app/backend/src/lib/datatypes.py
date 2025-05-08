@@ -35,3 +35,23 @@ class EncryptedFile:
     key: bytes
     created_at: str
     fragments: List[FileFragment]
+
+@dataclass
+class EncryptedResponse:
+    """
+    Response model for the encryption endpoint.
+    Contains the UUID, user ID, encryption key, creation timestamp,
+    and fragments of the encrypted file.
+
+    Attributes:
+        uuid (str): The UUID of the encrypted file.
+        user_id (str): The user ID of the owner.
+        key (str): The encryption key used for the file.
+        created_at (str): The timestamp when the file was created.
+        fragments (List[FileFragment]): A list of fragments of the encrypted file.
+    """
+    uuid: str
+    user_id: str
+    key: str
+    created_at: str
+    fragments: List[FileFragment]
