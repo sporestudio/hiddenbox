@@ -23,18 +23,12 @@ const ThemeToggle: React.FC<Props> = ({ id }) => {
   }, []);
 
   const handleToggleClick = () => {
-    const element = document.documentElement;
-    const newIsDark = !isDark;
+    const htmlElement = document.documentElement;
+    const newTheme = isDark ? "light" : "dark";
 
-    if (newIsDark) {
-      element.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      element.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-
-    setIsDark(newIsDark); 
+    htmlElement.classList.toggle("dark", newTheme === "dark");
+    localStorage.setItem("theme", newTheme);
+    setIsDark(newTheme === "dark"); 
   };
 
   return (
