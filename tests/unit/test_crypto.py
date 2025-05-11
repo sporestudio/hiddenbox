@@ -75,7 +75,7 @@ def test_encrypted_file_datatype_is_valid(crypto, data, user_id, key):
     assert isinstance(encrypted_data.created_at, str)
     assert isinstance(encrypted_data.fragments, list)
 
-def test_fragment_file_datatype_is_valid(fragments, key):
+def test_fragment_file_datatype_is_valid(fragments):
     """
     Check that each generated fragment is a valid FileFragment with correct types and indices.
     """
