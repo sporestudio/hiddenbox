@@ -42,7 +42,6 @@ import redis
 
 from .datatypes import FileFragment
 
-
 class RedisService:
     def __init__(self, url):
         self._redis = redis.Redis.from_url(url)

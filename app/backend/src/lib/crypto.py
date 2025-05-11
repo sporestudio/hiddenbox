@@ -18,7 +18,6 @@ from cryptography.fernet import Fernet
 
 from .datatypes import EncryptedFile, FileFragment
 
-
 class Crypto:
     _FRAGMENT_SIZE = 1024 * 1024 # 1MB
 

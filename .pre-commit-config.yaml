@@ -16,6 +16,13 @@ repos:
       - id: check-yaml
         exclude: ^(README\.md|LICENSE|.*\.py|.*\.toml|.*\.txt)$
       - id: check-added-large-files
+  
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.11.9
+    hooks:
+      - id: ruff
+        name: run ruff (python linter)
+        types: [python]
 
   - repo: local
     hooks:

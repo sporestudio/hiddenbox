@@ -11,7 +11,6 @@ fragments of files and encrypted files, respectively
 
 from dataclasses import dataclass
 
-
 @dataclass
 class FileFragment:
     """
