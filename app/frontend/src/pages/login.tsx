@@ -5,6 +5,7 @@ import { LoginCard } from '../components/LoginCard';
 import Starry from "../components/Starry";
 import GridBackground from "../components/GridBackground";
 import Header from '../components/Header';
+import Photo from '../components/Photo';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -33,6 +34,11 @@ const LoginPage: React.FC = () => {
       />
       <Header />
       <main className="z-10 flex items-center justify-center h-full">
+        <Photo
+          imageSrc='/assets/hiddenbox-logo.png'
+          darkImageSrc='/assets/hiddenbox-logo.png'
+          imageAlt='logo' 
+        />
         <LoginCard onSubmit={handleSubmit} />
       </main>
     </div>

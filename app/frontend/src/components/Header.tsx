@@ -25,6 +25,8 @@ const Header: React.FC = () => {
     };
   }, []);
 
+  const isLoginPage = location.pathname === "/login";
+
   return (
     <header
       id="header"
@@ -41,23 +43,25 @@ const Header: React.FC = () => {
           </a>
 
           {/* Navigation */}
-          <nav className="hidden items-center gap-1 text-sm md:flex">
-            {LINKS.map((LINK) => (
-              <a
-                key={LINK.HREF}
-                href={LINK.HREF}
-                className={cn(
-                  "flex h-8 items-center justify-center rounded-full px-3 duration-300 hover:transition-colors",
-                  window.location.pathname === LINK.HREF ||
-                    "/" + window.location.pathname.split("/")[1] === LINK.HREF
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "text-black/80 hover:bg-black/20 hover:text-black dark:text-white/80 dark:hover:bg-white/20 dark:hover:text-white"
-                )}
-              >
-                {LINK.TEXT}
-              </a>
-            ))}
-          </nav>
+          {!isLoginPage && (
+            <nav className="hidden items-center gap-1 text-sm md:flex">
+              {LINKS.map((LINK) => (
+                <a
+                  key={LINK.HREF}
+                  href={LINK.HREF}
+                  className={cn(
+                    "flex h-8 items-center justify-center rounded-full px-3 duration-300 hover:transition-colors",
+                    window.location.pathname === LINK.HREF ||
+                      "/" + window.location.pathname.split("/")[1] === LINK.HREF
+                      ? "bg-black text-white dark:bg-white dark:text-black"
+                      : "text-black/80 hover:bg-black/20 hover:text-black dark:text-white/80 dark:hover:bg-white/20 dark:hover:text-white"
+                  )}
+                >
+                  {LINK.TEXT}
+                </a>
+              ))}
+            </nav>
+          )}
 
           {/* Icons and Toggles */}
           <div className="flex gap-2">
