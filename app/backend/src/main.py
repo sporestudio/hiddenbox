@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os, io, uuid, time
 from functools import lru_cache
 from typing import List
@@ -12,9 +14,6 @@ from lib.redis_service import RedisService
 from lib.datatypes import FileFragment, EncryptedFile, EncryptedResponse
 
 
-# ——————————————————————————————---
-#   Dependencies and environment
-# ——————————————————————————————---
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -30,6 +29,7 @@ def get_crypto() -> Crypto:
     """
     if not FERNET_KEY:
         raise RunTimeError("Fernet Key not set")
+
     return Crypto(key=FERNET_KEY.enconde())
 
 @lru_cache()
@@ -39,12 +39,9 @@ def get_redis() -> RedisService:
     """
     if not REDIS_URL:
         raise RunTimeError("Redis URL not set")
+        
     return RedisService(url=REDIS_URL)
 
-
-# ——————————————————————————————————————————
-#   Create the app and add CORS middleware
-# ——————————————————————————————————————————
 app = FastAPI()
 
 # CORS middleware to allow requests from the frontend.
@@ -55,7 +52,6 @@ app.add_middleware(
     allow_methods=["*"], 
     allow_headers=["*"],  
 )
-
 
 # ———————————————————-
 #   /Endpoints
@@ -140,7 +136,7 @@ async def download_file(
             FileFragment(uuid=file_uuid, index=idx, data=frag) for idx, frag in raw
         ]
 
-        data = cryto.decrypt(fragments)
+        data = crypto.decrypt(fragments)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
