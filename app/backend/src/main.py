@@ -62,8 +62,8 @@ app.add_middleware(
 # ———————————————————-
 #   /Endpoints
 # ———————————————————-
-@app.post("/upload", response_model=EncryptedResponse)
 
+@app.post("/upload", response_model=EncryptedResponse)
 async def upload_file(
     user_id: str = Form(...),
     file: UploadFile = File(...),
@@ -82,9 +82,10 @@ async def upload_file(
 
     Returns:
         EncryptedResponse: A response model containing the UUID, user ID, encryption key, creation
-                         timestamp, and fragments of the encrypted file.
+                           timestamp, and fragments of the encrypted file.
     """
     data = await file.read()
+
     try:
         encrypted: EncryptedFile = crypto.encrypt(data, user_id)
 
@@ -101,6 +102,7 @@ async def upload_file(
         ]
 
         redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragments_to_save)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -111,7 +113,6 @@ async def upload_file(
         created_at=encrypted.created_at,
         fragments=fragments_to_save,
     )
-
 
 @app.get("/download/{file_uuid}")
 async def download_file(
@@ -145,6 +146,7 @@ async def download_file(
         ]
 
         data = crypto.decrypt(fragments)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
