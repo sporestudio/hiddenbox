@@ -1,5 +1,0 @@
-pytest
-fastapi
-pre-commit
-python-multipart
-cryptography
