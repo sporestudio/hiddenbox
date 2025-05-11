@@ -63,6 +63,7 @@ app.add_middleware(
 #   /Endpoints
 # ———————————————————-
 @app.post("/upload", response_model=EncryptedResponse)
+
 async def upload_file(
     user_id: str = Form(...),
     file: UploadFile = File(...),
@@ -80,7 +81,7 @@ async def upload_file(
         redis (RedisService): The Redis service for storing metadata and fragments.
 
     Returns:
-        EncryptResponse: A response model containing the UUID, user ID, encryption key, creation
+        EncryptedResponse: A response model containing the UUID, user ID, encryption key, creation
                          timestamp, and fragments of the encrypted file.
     """
     data = await file.read()
