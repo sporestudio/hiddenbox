@@ -1,0 +1,35 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+      - id: isort
+        name: run isort (python)
+        types: [python]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: \.(py|pyi)$
+      - id: end-of-file-fixer
+        files: \.(py|pyi)$
+      - id: check-yaml
+        files: \.(yml|yaml)$
+      - id: check-added-large-files
+  
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.11.9
+    hooks:
+      - id: ruff
+        name: run ruff (python linter)
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: run-pytest
+        name: run pytest
+        entry: pytest tests
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true

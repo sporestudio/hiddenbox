@@ -4,6 +4,10 @@
 # Include .gitignore
 !.gitignore
 
+# Include CI files
+!.github
+!.pre-commit-config.yaml
+
 # Local .terraform directories
 **/.terraform/*
 *terraform*

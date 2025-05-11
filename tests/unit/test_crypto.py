@@ -1,14 +1,18 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+"""
+Suite of tests functions for the Crypto class.
+"""
 
 import os
 import random
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.backend.src.lib.crypto import Crypto
-from app.backend.src.lib.datatypes import FileFragment, EncryptedFile
+from app.backend.src.lib.datatypes import EncryptedFile, FileFragment
 
 _BYTES_PER_MB = 1024 * 1024
 
@@ -31,7 +35,8 @@ def user_id():
 @pytest.fixture
 def data(request):
     """
-    Generate random test data of random size in megabytes. The size range will be defined within the variable size_range.
+    Generate random test data (size in mb).
+    If no size is given, the size range will be defined within the variable size_range.
     """
     size_range = (1.0, 10.0)
     size = getattr(request, "param", None)
@@ -114,7 +119,7 @@ def test_created_at_timestamp_is_close_to_now(crypto, data, user_id):
     Ensure created_at timestamp is within 1 second of current UTC time.
     """
     encrypted_data = crypto.encrypt(data, user_id)
-    now_ts = int(datetime.now(timezone.utc).timestamp())
+    now_ts = int(datetime.now(UTC).timestamp())
     created_at_ts = int(encrypted_data.created_at)
     assert abs(now_ts - created_at_ts) <= 1
 
