@@ -1,7 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-from typing import List
+"""
+Datatypes Module
+----------------
+
+This module defines the data structures used in the application.
+It includes the FileFragment and EncryptedFile classes, which represent
+fragments of files and encrypted files, respectively
+"""
+
 from dataclasses import dataclass
 
 @dataclass
@@ -34,7 +41,7 @@ class EncryptedFile:
     user_id: str
     key: bytes
     created_at: str
-    fragments: List[FileFragment]
+    fragments: list[FileFragment]
 
 @dataclass
 class EncryptedResponse:
@@ -54,4 +61,4 @@ class EncryptedResponse:
     user_id: str
     key: str
     created_at: str
-    fragments: List[FileFragment]
+    fragments: list[FileFragment]
