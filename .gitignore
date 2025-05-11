@@ -45,23 +45,19 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Ignore virtual environments
-*venv*
+# Ignore python virtual environments
+# https://docs.python.org/3/tutorial/venv.html
+*/venv/*
 
-# Ignore pycache
-*__pycache__*
-
-# Ignore Python bytecode
+# Ignore python cache files
+__pycache__/
 *.py[cod]
-# Ignore Jupyter Notebook checkpoints
-.ipynb_checkpoints
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg 
 
-# Ignore local env files
-.env
 
 # Ignore personal files
 TODO*
-
-# Ignore local IDE files
-*/.vscode/*
-.vscode/*
