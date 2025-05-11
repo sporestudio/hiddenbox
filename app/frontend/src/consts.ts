@@ -1,4 +1,4 @@
-import type { Site, Links } from "./types";
+import type { Site, Links } from "./types/types";
 
 export const SITE: Site = {
   TITLE: "HiddenBox",
