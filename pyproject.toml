@@ -3,6 +3,7 @@ name = "hiddenbox"
 description = "Encrypted and private file management service in the cloud"
 version = "0.1.0"
 requires-python = ">=3.11"
+package-mode = false
 dependencies = [
   "ruff",
   "pytest",
