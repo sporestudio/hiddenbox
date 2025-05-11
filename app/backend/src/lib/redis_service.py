@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+Redis Service Module
+--------------------
+
 Redis service for storing and retrieving file metadata and fragments.
 This module provides a RedisService class that allows you to store and retrieve
 file metadata and fragments in a Redis database. The metadata includes the file's
@@ -9,26 +12,33 @@ are stored as a list of FileFragment objects, which contain the fragment's index
 and data.
 
 Usage:
-    from redis_service import RedisService
 
-    # Initialize the Redis service
-    redis_service = RedisService(url="redis://localhost:6379")
+>>> from redis_service import RedisService
 
-    # Store metadata
-    redis_service.store_metadata(file_uuid="1234", user_id="user1", key="encryption_key", created_at="2023-10-01T12:00:00Z")
+>>> # Initialize the Redis service
+>>> redis_service = RedisService(url="redis://localhost:6379")
 
-    # Store fragments
-    fragments = [FileFragment(index=0, data=b"fragment_data_0"), FileFragment(index=1, data=b"fragment_data_1")]
-    redis_service.store_fragments(file_uuid="1234", fragments=fragments)
+>>> # Store metadata
+>>> redis_service.store_metadata(
+        file_uuid="1234",
+        user_id="user1",
+        key="encryption_key",
+        created_at="2023-10-01T12:00:00Z"
+    )
 
-    # Retrieve metadata
-    metadata = redis_service.get_metadata(file_uuid="1234")
+>>> # Store fragments
+>>> fragments = [FileFragment(index=0, data=b"fragment_data_0"), FileFragment(index=1, data=b"fragment_data_1")]
+>>> redis_service.store_fragments(file_uuid="1234", fragments=fragments)
 
-    # Retrieve fragments
-    retrieved_fragments = redis_service.get_fragments(file_uuid="1234")
+>>> # Retrieve metadata
+>>> metadata = redis_service.get_metadata(file_uuid="1234")
+
+>>> # Retrieve fragments
+>>> retrieved_fragments = redis_service.get_fragments(file_uuid="1234")
 """
 
 import redis
+
 from .datatypes import FileFragment
 
 
@@ -61,7 +71,7 @@ class RedisService:
             fragments (list[FileFragments]): List of FileFragments files objects
         """
         self._redis.rpush(f"file:{file_uuid}:fragments", *[str(f.index) for f in fragments])
-    
+
         for f in fragments:
             self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
 
@@ -73,7 +83,8 @@ class RedisService:
             file_uuid (str): File's unique identifier
 
         Returns:
-            Dict: A dictionary with the file's metadata. The keys are the field names and the values are the field values.
+            dict: A dictionary with the file's metadata. The keys are the field names
+                  and the values are the field values.
         """
         data = self._redis.hgetall(f"file:{file_uuid}")
 
@@ -81,7 +92,7 @@ class RedisService:
             return {}
 
         return {k.decode(): v.decode() for k,v in data.items()}
-    
+
     def get_fragments(self, file_uuid: str) -> list[FileFragment]:
         """
         Get the stored fragments files from Redis database.

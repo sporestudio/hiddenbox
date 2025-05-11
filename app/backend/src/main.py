@@ -1,45 +1,51 @@
 #!/usr/bin/env python3
 
-import os, io, uuid, time
-from functools import lru_cache
-from typing import List
+"""
+API Module
+----------
 
-from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException
+This module provides a FastAPI application for uploading and downloading encrypted files.
+"""
+
+import io
+import os
+import uuid
+from functools import lru_cache
+
+from cryptography.fernet import Fernet
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
 from lib.crypto import Crypto
-from cryptography.fernet import Fernet
+from lib.datatypes import EncryptedFile, EncryptedResponse, FileFragment
 from lib.redis_service import RedisService
-from lib.datatypes import FileFragment, EncryptedFile, EncryptedResponse
 
-
-from dotenv import load_dotenv
 load_dotenv()
 
 REDIS_URL = os.getenv("REDIS_URL")
 WEB_URL = os.getenv("WEB_URL")
 FERNET_KEY = Fernet.generate_key()
 
-@lru_cache()
+@lru_cache
 def get_crypto() -> Crypto:
     """
     Singleton pattern for Crypto service to not regenerate the key
     and server cipher every time.
     """
     if not FERNET_KEY:
-        raise RunTimeError("Fernet Key not set")
+        raise ValueError("Fernet Key not set")
 
     return Crypto(key=FERNET_KEY.enconde())
 
-@lru_cache()
+@lru_cache
 def get_redis() -> RedisService:
     """
     Singleton pattern to handle Redis service connections.
     """
     if not REDIS_URL:
-        raise RunTimeError("Redis URL not set")
-        
+        raise ValueError("Redis URL not set")
+
     return RedisService(url=REDIS_URL)
 
 app = FastAPI()
@@ -49,20 +55,20 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[WEB_URL],
     allow_credentials=True,
-    allow_methods=["*"], 
-    allow_headers=["*"],  
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ———————————————————-
 #   /Endpoints
 # ———————————————————-
-@app.post("/upload", response_model=EncryptResponse)
+@app.post("/upload", response_model=EncryptedResponse)
 async def upload_file(
     user_id: str = Form(...),
     file: UploadFile = File(...),
     crypto: Crypto = Depends(get_crypto),
     redis: RedisService = Depends(get_redis),
-) -> EncryptResponse:
+) -> EncryptedResponse:
     """
     Upload a file, encrypt it, and store its metadata and fragments in Redis.
     The file is fragmented into smaller chunks for storage.
@@ -71,10 +77,11 @@ async def upload_file(
         user_id (str): The user ID of the owner.
         file (UploadFile): The file to be uploaded and encrypted.
         crypto (Crypto): The Crypto service for encryption.
-        redis (RedisService): The Redis service for storing metadata and fragments. 
+        redis (RedisService): The Redis service for storing metadata and fragments.
 
     Returns:
-        EncryptResponse: A response model containing the UUID, user ID, encryption key, creation timestamp, and fragments of the encrypted file.
+        EncryptResponse: A response model containing the UUID, user ID, encryption key, creation
+                         timestamp, and fragments of the encrypted file.
     """
     data = await file.read()
     try:
@@ -94,7 +101,7 @@ async def upload_file(
 
         redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragments_to_save)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))   
+        raise HTTPException(status_code=500, detail=str(e))
 
     return EncryptedResponse(
         uuid=encrypted.uuid,
@@ -130,7 +137,7 @@ async def download_file(
 
         if not meta:
             raise HTTPException(status_code=404, detail="File not found")
-        
+
         raw = redis.get_fragments(file_uuid)
         fragments = [
             FileFragment(uuid=file_uuid, index=idx, data=frag) for idx, frag in raw
