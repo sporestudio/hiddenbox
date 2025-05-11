@@ -38,6 +38,17 @@ select = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.params.Depends",
+  "fastapi.Query", "fastapi.params.Query",
+  "fastapi.File", "fastapi.params.File",
+  "fastapi.Form", "fastapi.params.Form",
+  "fastapi.Path", "fastapi.params.Path",
+  "fastapi.Header", "fastapi.params.Header"
+]
+
 [tool.isort]
 line_length = 120
 multi_line_output = 3
