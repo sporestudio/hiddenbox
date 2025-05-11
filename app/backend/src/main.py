@@ -102,7 +102,7 @@ async def upload_file(
 
         redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragments_to_save)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     return EncryptedResponse(
         uuid=encrypted.uuid,
@@ -146,7 +146,7 @@ async def download_file(
 
         data = crypto.decrypt(fragments)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     return StreamingResponse(
         io.BytesIO(data),
