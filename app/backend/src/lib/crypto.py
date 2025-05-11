@@ -37,7 +37,7 @@ class Crypto:
         self.__key = key
         self.__cipher = Fernet(self.__key)
 
-    def _reinit_if_key_changes(self, key: bytes):
+    def _reinit_if_key_changes(self, key: bytes) -> None:
         """
         Reinitialize the cipher if the key changes.
 
