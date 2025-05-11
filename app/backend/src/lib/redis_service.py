@@ -1,8 +1,36 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
+"""
+Redis service for storing and retrieving file metadata and fragments.
+This module provides a RedisService class that allows you to store and retrieve
+file metadata and fragments in a Redis database. The metadata includes the file's
+unique identifier, user ID, encryption key, and creation timestamp. The fragments
+are stored as a list of FileFragment objects, which contain the fragment's index
+and data.
+
+Usage:
+    from redis_service import RedisService
+
+    # Initialize the Redis service
+    redis_service = RedisService(url="redis://localhost:6379")
+
+    # Store metadata
+    redis_service.store_metadata(file_uuid="1234", user_id="user1", key="encryption_key", created_at="2023-10-01T12:00:00Z")
+
+    # Store fragments
+    fragments = [FileFragment(index=0, data=b"fragment_data_0"), FileFragment(index=1, data=b"fragment_data_1")]
+    redis_service.store_fragments(file_uuid="1234", fragments=fragments)
+
+    # Retrieve metadata
+    metadata = redis_service.get_metadata(file_uuid="1234")
+
+    # Retrieve fragments
+    retrieved_fragments = redis_service.get_fragments(file_uuid="1234")
+"""
 
 import redis
-from typing import List, Dict
+from .datatypes import FileFragment
+
 
 class RedisService:
     def __init__(self, url):
@@ -13,10 +41,10 @@ class RedisService:
         Save metadata of an encrypted file into Redis database.
 
         Args:
-            file_uuid (str): file's unique identifier
-            user_id (str): user's unique identifier
-            key (str): encryption key
-            created_at (str): timestamp of when the file was created
+            file_uuid (str): File's unique identifier
+            user_id (str): User's unique identifier
+            key (str): Encryption key
+            created_at (str): Timestamp of when the file was created
         """
         self._redis.hset(f"file:{file_uuid}", mapping={
             "user_id": user_id,
@@ -29,20 +57,20 @@ class RedisService:
         Save a list with the fragments' ids and their respective fragments.
 
         Args:
-            file_uuid (str): file's unique identifier
-            fragments (list): list of tuples with the fragment's index and the fragment itself
+            file_uuid (str): File's unique identifier
+            fragments (list[FileFragments]): List of FileFragments files objects
         """
-        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(idx) for idx, _ in fragments])
+        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(f.index) for f in fragments])
+    
+        for f in fragments:
+            self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
 
-        for idx, frag in fragments:
-            self._redis.set(f"fragment:{file_uuid}:{idx}", frag)
-
-    def get_metadata(self, file_uuid: str) -> Dict:
+    def get_metadata(self, file_uuid: str) -> dict[str, str]:
         """
         Load file metadata from Redis database.
 
         Args:
-            file_uuid (str): file's unique identifier
+            file_uuid (str): File's unique identifier
 
         Returns:
             Dict: A dictionary with the file's metadata. The keys are the field names and the values are the field values.
@@ -54,22 +82,22 @@ class RedisService:
 
         return {k.decode(): v.decode() for k,v in data.items()}
     
-    def get_fragments(self, file_uuid: str) -> List:
+    def get_fragments(self, file_uuid: str) -> list[FileFragment]:
         """
         Get the stored fragments files from Redis database.
 
         Args:
-            file_uuid (str): file's unique identifier
+            file_uuid (str): File's unique identifier
 
         Returns:
-            List: A list of tuples with the fragment's index and the fragment itself.
+            list[FileFragments]: List of FileFragments files objects
         """
         idxs = self._redis.lrange(f"file:{file_uuid}:fragments", 0, -1)
         result = []
 
         for binary_idx in idxs:
             idx = int(binary_idx.decode())
-            frag = self._redis.get(f"fragment:{file_uuid}:{idx}")
-            result.append(idx, frag)
+            frag_data = self._redis.get(f"fragment:{file_uuid}:{idx}")
+            result.append(FileFragment(index=idx, data=frag_data, uuid=file_uuid))
 
         return result
