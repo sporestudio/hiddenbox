@@ -1,3 +1,13 @@
+# Ignore dotfiles
+.*
+
+# Include .gitignore
+!.gitignore
+
+# Include CI files
+!.github
+!.pre-commit-config.yaml
+
 # Local .terraform directories
 **/.terraform/*
 *terraform*
@@ -51,7 +61,3 @@ __pycache__/
 
 # Ignore personal files
 TODO*
-
-# Ignore visual studio code settings
-*/.vscode/*
-.vscode/*
