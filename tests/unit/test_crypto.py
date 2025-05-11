@@ -62,11 +62,11 @@ def non_fragmented_encrypted_data(key, data):
 # Tests
 # ----------------------
 
-def test_encrypted_file_datatype_is_valid(crypto, data, user_id):
+def test_encrypted_file_datatype_is_valid(crypto, data, user_id, key):
     """
     Ensure that encrypt_file returns an EncryptedFile with all expected types and attributes.
     """
-    encrypted_data = crypto.encrypt(data, user_id)
+    encrypted_data = crypto.encrypt(data, user_id, key)
 
     assert isinstance(encrypted_data, EncryptedFile)
     assert isinstance(encrypted_data.uuid, str)
@@ -75,7 +75,7 @@ def test_encrypted_file_datatype_is_valid(crypto, data, user_id):
     assert isinstance(encrypted_data.created_at, str)
     assert isinstance(encrypted_data.fragments, list)
 
-def test_fragment_file_datatype_is_valid(fragments):
+def test_fragment_file_datatype_is_valid(fragments, key):
     """
     Check that each generated fragment is a valid FileFragment with correct types and indices.
     """
@@ -98,72 +98,72 @@ def test_fragments_has_correct_size(fragments, crypto):
 
     assert len(fragments[-1].data) <= crypto._FRAGMENT_SIZE
 
-def test_encrypt_then_decrypt_restores_original_data(crypto, data, user_id):
+def test_encrypt_then_decrypt_restores_original_data(crypto, data, user_id, key):
     """
     Ensure that data remains the same after encrypting and decrypting.
     """
-    encrypted_data = crypto.encrypt(data, user_id)
-    decrypted_data = crypto.decrypt(encrypted_data.fragments)
+    encrypted_data = crypto.encrypt(data, user_id, key)
+    decrypted_data = crypto.decrypt(encrypted_data.fragments, key)
     assert decrypted_data == data
 
 def test_encrypted_file_metadata_is_correct(crypto, data, user_id, key):
     """
     Validate that metadata in the EncryptedFile is accurate.
     """
-    encrypted_data = crypto.encrypt(data, user_id)
+    encrypted_data = crypto.encrypt(data, user_id, key)
     assert encrypted_data.user_id == user_id
     assert encrypted_data.key == key
 
-def test_created_at_timestamp_is_close_to_now(crypto, data, user_id):
+def test_created_at_timestamp_is_close_to_now(crypto, data, user_id, key):
     """
     Ensure created_at timestamp is within 1 second of current UTC time.
     """
-    encrypted_data = crypto.encrypt(data, user_id)
+    encrypted_data = crypto.encrypt(data, user_id, key)
     now_ts = int(datetime.now(UTC).timestamp())
     created_at_ts = int(encrypted_data.created_at)
     assert abs(now_ts - created_at_ts) <= 1
 
-def test_encrypt_empty_file(crypto, user_id):
+def test_encrypt_empty_file(crypto, user_id, key):
     """
     Ensure that encrypting and decrypting an empty byte string works correctly.
     """
     empty_file = b""
-    encrypted_data = crypto.encrypt(empty_file, user_id)
-    decrypted_data = crypto.decrypt(encrypted_data.fragments)
+    encrypted_data = crypto.encrypt(empty_file, user_id, key)
+    decrypted_data = crypto.decrypt(encrypted_data.fragments, key)
 
     assert decrypted_data == empty_file
 
 @pytest.mark.parametrize("data", [20.0, 40.0], indirect=True)
-def test_encrypt_large_file_generates_multiple_fragments(crypto, user_id, data):
+def test_encrypt_large_file_generates_multiple_fragments(crypto, user_id, data, key):
     """
     Check that encrypting large files results in multiple fragments as expected.
     """
-    encrypted_file = crypto.encrypt(data, user_id)
+    encrypted_file = crypto.encrypt(data, user_id, key)
 
     assert len(encrypted_file.fragments) > 1
 
-def test_decryption_works_even_fragment_disordered(crypto, user_id, data):
+def test_decryption_works_even_fragment_disordered(crypto, user_id, data, key):
     """
     Confirm that decryption still works when fragments are provided in a different order.
     """
-    encrypted_file = crypto.encrypt(data, user_id)
+    encrypted_file = crypto.encrypt(data, user_id, key)
 
     reversed_fragments = list(reversed(encrypted_file.fragments))
-    decrypted_data = crypto.decrypt(reversed_fragments)
+    decrypted_data = crypto.decrypt(reversed_fragments, key)
     assert decrypted_data == data
 
-def test_decryption_when_passed_non_fragment_data(crypto, non_fragmented_encrypted_data, data):
+def test_decryption_when_passed_non_fragment_data(crypto, non_fragmented_encrypted_data, data, key):
     """
     Ensure that decrypting a single non-fragmented encrypted file works as expected.
     """
-    decrypted_data = crypto.decrypt(non_fragmented_encrypted_data)
+    decrypted_data = crypto.decrypt(non_fragmented_encrypted_data, key)
     assert decrypted_data == data
 
-def test_decryption_fails_on_modified_fragment(crypto, user_id, data):
+def test_decryption_fails_on_modified_fragment(crypto, user_id, data, key):
     """
     Verify that tampering with a fragment causes decryption to fail with an InvalidToken error.
     """
-    encrypted_file = crypto.encrypt(data, user_id)
+    encrypted_file = crypto.encrypt(data, user_id, key)
     fragments = encrypted_file.fragments
 
     corrupted_data = bytearray(fragments[0].data)
@@ -171,4 +171,4 @@ def test_decryption_fails_on_modified_fragment(crypto, user_id, data):
     fragments[0].data = bytes(corrupted_data)
 
     with pytest.raises(InvalidToken):
-        crypto.decrypt(fragments)
+        crypto.decrypt(fragments, key)

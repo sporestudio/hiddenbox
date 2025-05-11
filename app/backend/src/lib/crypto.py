@@ -21,9 +21,32 @@ from .datatypes import EncryptedFile, FileFragment
 class Crypto:
     _FRAGMENT_SIZE = 1024 * 1024 # 1MB
 
-    def __init__(self, key):
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        """
+        This method ensures that the Crypto class is a singleton.
+        It creates a new instance of the class if one does not already exist.
+        """
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+    def __init__(self, key: bytes):
         self.__key = key
         self.__cipher = Fernet(self.__key)
+
+    def _reinit_if_key_changes(self, key: bytes):
+        """
+        Reinitialize the cipher if the key changes.
+
+        Args:
+            key (bytes): The encryption key.
+        """
+        if key != self.__key:
+            self.__key = key
+            self.__cipher = Fernet(self.__key)
 
     def _fragment_bytes(self, token: bytes) -> list[FileFragment]:
         """
@@ -49,18 +72,21 @@ class Crypto:
 
         return fragments
 
-    def encrypt(self, file_data: bytes, user_id: str) -> EncryptedFile:
+    def encrypt(self, file_data: bytes, user_id: str, key: bytes) -> EncryptedFile:
         """
         Encrypt a file and associate it with the user's ID. The file is fragmented into smaller chunks.
 
         Args:
             file_data (bytes): The file data to be encrypted.
             user_id (str): The user ID of the owner.
+            key (bytes): The encryption key to be used.
 
         Returns:
             EncryptedFile: An object representing the encrypted file (data and metadata included).
                            To see EncryptedFile attributes refer to `datatypes` module documentation.
         """
+        self._reinit_if_key_changes(key)
+
         token = self.__cipher.encrypt(file_data)  # Encrypt the file data as a Fermet's token format
         fragments = self._fragment_bytes(token)
         file_uuid = str(uuid.uuid4())
@@ -88,17 +114,20 @@ class Crypto:
         """
         return b"".join(frag.data for frag in sorted(fragments, key=lambda f: f.index))
 
-    def decrypt(self, data: list[FileFragment] | bytes) -> bytes:
+    def decrypt(self, data: list[FileFragment] | bytes, key: bytes) -> bytes:
         """
         Decrypt a file. If the passed data is fragmented, the fragments are combined into a single byte
         string and then decrypted.
 
         Args:
             data (list[FileFragment] | bytes): The list of fragments to be decrypted.
+            key (bytes): The encryption key to be used.
 
         Returns:
             bytes: The decrypted file data.
         """
+        self._reinit_if_key_changes(key)
+
         if isinstance(data, list):
             data = self._defragment_bytes(data)
 
