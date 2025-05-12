@@ -12,7 +12,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<{ username: string } | null>(null);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string /*password: string*/) => {
     // TODO: 
     // [*] Cretate api endpoint
     // [*] Verify credentials in databse

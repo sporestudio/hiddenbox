@@ -18,7 +18,7 @@ interface FileItem {
 }
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { /*user,*/ logout } = useAuth();
   const navigate = useNavigate();
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
