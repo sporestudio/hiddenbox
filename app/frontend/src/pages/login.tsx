@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LoginCard } from '../components/LoginCard';
@@ -8,8 +8,8 @@ import Header from '../components/Header';
 import Photo from '../components/Photo';
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // const [username, setUsername] = useState('');
+  // const [password, setPassword] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
