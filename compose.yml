@@ -19,7 +19,7 @@ services:
     ports:
       - "80:80"
 
-  node:
+  web:
     build:
       context: ./src/web
       dockerfile: Dockerfile
@@ -29,7 +29,7 @@ services:
     volumes:
       - dist:/app/dist
 
-  backend:
+  api:
     build:
       context: ./src/api
       dockerfile: Dockerfile
