@@ -61,3 +61,7 @@ __pycache__/
 
 # Ignore personal files
 TODO*
+
+# Ignore visual studio code settings
+*/.vscode/*
+.vscode/*

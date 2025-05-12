@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 import pytest
 from cryptography.fernet import Fernet, InvalidToken
 
-from app.backend.src.lib.crypto import Crypto
-from app.backend.src.lib.datatypes import EncryptedFile, FileFragment
+from src.api.lib.crypto import Crypto
+from src.api.lib.datatypes import EncryptedFile, FileFragment
 
 _BYTES_PER_MB = 1024 * 1024
 
