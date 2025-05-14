@@ -142,8 +142,11 @@ const Dashboard: React.FC = () => {
 
             {/* File list */}
             <div className="rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b">
+              <div className="flex items-center gap-4 border-b p-4">
                 <h2 className="text-lg font-semibold">My Files</h2>
+                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                  Encrypted
+                </span>
               </div>
               {filteredFiles.length > 0 ? (
                 <ul>
@@ -160,11 +163,7 @@ const Dashboard: React.FC = () => {
                           <p className="font-medium">{file.name}</p>
                           <p className="text-sm">
                             {file.size} • {file.lastModified}
-                            {file.encrypted && (
-                              <span className="ml-2 text-xs px-2 py-0.5 rounded-full">
-                                Encrypted
-                              </span>
-                            )}
+                            {file.encrypted}
                           </p>
                         </div>
                       </div>
