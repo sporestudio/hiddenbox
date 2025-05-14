@@ -33,7 +33,7 @@ const Header: React.FC = () => {
       className="fixed top-0 z-50 hidden h-16 w-full md:block print:hidden"
     >
       <div className="container mx-auto h-full">
-        <div className="relative flex h-full items-center justify-between">
+        <div className="relative flex h-full items-center justify-between mr-6 ml-6">
           {/* Logo/Title */}
           <a
             href="/"
