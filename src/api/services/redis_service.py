@@ -39,7 +39,7 @@ Usage:
 
 import redis
 
-from src.api.lib.datatypes import FileFragment
+from lib.datatypes import FileFragment
 
 class RedisService:
     def __init__(self, url):
