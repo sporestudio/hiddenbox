@@ -20,7 +20,7 @@ const BaseLayout: React.FC<{ title: string; description: string; children?: Reac
       <head>
         <BaseHead title={title} description={description} />
       </head>
-      <body>
+      <body className="flex flex-col min-h-screen">
         <GridBackground />
         <Starry
           minSize={0.5}
@@ -30,7 +30,7 @@ const BaseLayout: React.FC<{ title: string; description: string; children?: Reac
           className="fixed h-full w-full"
         />
         <Header />
-        <main className="z-10">{children}</main>
+        <main className="flex-grow z-10">{children}</main>
         {location.pathname !== "/login" && <NavBar />}
         <Footer />
       </body>
