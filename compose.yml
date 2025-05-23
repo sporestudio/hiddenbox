@@ -42,6 +42,19 @@ services:
     depends_on:
       - redis
 
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    ports:
+      - "5432:5432"
+    env_file: 
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./config/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+
 volumes:
   data:
   dist:
+  db_data:
