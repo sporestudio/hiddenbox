@@ -1,3 +1,9 @@
+variable "project_name" {
+  description = "Project name"
+  type = string
+  default = "hiddenbox"
+}
+
 variable "aws_access_key_id" {
   description = "AWS Access Key ID"
   type = string
