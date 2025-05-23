@@ -1,5 +1,3 @@
-# main.terraform
-
 terraform {
     required_providers {
         aws = {
@@ -8,82 +6,65 @@ terraform {
         }
     }
 
-    backend "s3" {
-        bucket = "tfstate-hiddenbox"
-        key    = "terraform.tfstate"
-        region = "us-east-1"
-        encrypt = true
+    backend "local" {
+        path = "terraform.tfstate"
     }
 }
 
-
 provider "aws" {
     shared_credentials_files = [ "~/.aws/credentials" ]
-    region                   = var.region
+    region = var.region
 }
 
 data "aws_vpc" "default" {
     default = true
 }
 
+resource "random_id" "bucket_suffix" {
+    byte_length = 4
+}
 
-# Security group for storage modules
-resource "aws_security_group" "storage_nodes" {
-    name = "storage_nodes_sg"
-    description = "Security group for storage nodes"
-    vpc_id = data.aws_vpc.default.id
-
-    # SSH Access
-    ingress {
-        from_port   = 22
-        to_port     = 22
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "Allow SSH access"
-    }
-
-    # API Access
-    ingress {
-        from_port   = 8080
-        to_port     = 8080
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "Allow API access"
-    }
-
-    # Kubernetes API
-    ingress {
-        from_port   = 6443
-        to_port     = 6443
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "Allow Kubernetes API access"
-    }
-
-
-    # Allow all internal communication between nodes
-    ingress {
-        from_port   = 0
-        to_port     = 0
-        protocol    = "-1"
-        self = true
-        description = "Allow all internal communication"
-    }
-
-    # Allow all outbound traffic
-    egress {
-        from_port   = 0
-        to_port     = 0
-        protocol    = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+# S3 main bucket
+resource "aws_s3_bucket" "main_storage" {
+    bucket = "${var.project_name}-main-storage"
+    force_destroy = true
 
     tags = {
-        Name = "storage-nodes-sg"
-        Project = "hiddenbox"
+        Name = "main storage"
+        Project = var.project_name
+        Environment = "production"
     }
 }
 
+# Versioning main storage
+resource "aws_s3_bucket_versioning" "main_versioning" {
+    bucket = aws_s3_bucket.main_storage.id
+    versioning_configuration {
+        status = "Enabled"
+    }
+}
+
+# Cipher configuration for main bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "main_encryption" {
+    bucket = aws_s3_bucket.main_storage.id
+
+    rule {
+        apply_server_side_encryption_by_default {
+            sse_algorithm = "AES256"
+        }
+    }
+}
+
+# Block public access to main bucket
+resource "aws_s3_bucket_public_access_block" "main_block_access" {
+    bucket = aws_s3_bucket.main_storage.id
+
+    block_public_acls       = true
+    block_public_policy     = true
+    ignore_public_acls      = true
+    restrict_public_buckets = true
+
+}
 
 # Security group for main node
 resource "aws_security_group" "main" {
@@ -109,7 +90,6 @@ resource "aws_security_group" "main" {
         description = "Allow HTTP access"
     }
 
-
     # HTTPS access
     ingress {
         from_port   = 443
@@ -117,15 +97,6 @@ resource "aws_security_group" "main" {
         protocol    = "tcp"
         cidr_blocks = [ "0.0.0.0/0"]
         description = "Allow HTTPS access"
-    }
-
-    # PostgreSQL access
-    ingress {
-        from_port   = 5432
-        to_port     = 5432
-        protocol    = "tcp"
-        self = true
-        description = "Allow PostgreSQL access"
     }
 
     # Allow all outbound traffic
@@ -142,28 +113,11 @@ resource "aws_security_group" "main" {
     }
 }
 
-
 # Key pair for SSH access
 resource "aws_key_pair" "main" {
     key_name   = "main"
     public_key = file(var.ssh_public_key_path)
 }
-
-
-# EBS volumes for storage nodes
-resource "aws_ebs_volume" "storage_volume" {
-    count               = var.instances_amount
-    availability_zone   = element(aws_instance.storage[*].availability_zone, count.index)
-    size                = var.storage_volume_size
-    type                = "gp3"
-    encrypted           = true
-
-    tags = {
-        Name = "storage-volume-${count.index}"
-        Project = "hiddenbox"
-    }
-}
-
 
 # Main instance used to API, database and other services
 resource "aws_instance" "main" {
@@ -184,58 +138,4 @@ resource "aws_instance" "main" {
         Project = "hiddenbox"
         Role = "api-db-ochestrator"
     }
-}
-
-
-# Instances for storage nodes
-resource "aws_instance" "storage" {
-    count                   = var.instances_amount
-    ami                     = var.ubuntu_ami
-    instance_type           = var.storage_instance_type
-    key_name                = aws_key_pair.main.key_name
-    user_data               = var.user
-    vpc_security_group_ids  = [aws_security_group.storage_nodes.id]
-    associate_public_ip_address = true
-
-    root_block_device {
-        volume_size = 20
-        volume_type = "gp3"
-    }
-
-    tags = {
-        Name = "storage-node-${count.index}"
-        Project = "hiddenbox"
-        Role = "storage"
-    }
-}
-
-
-# Associate EBS volumes with storage nodes
-resource "aws_volume_attachment" "storage" {
-    count       = var.instances_amount
-    device_name = "/dev/sdf"
-    volume_id   = element(aws_ebs_volume.storage_volume[*].id, count.index)
-    instance_id = element(aws_instance.storage[*].id, count.index)
-}
-
-
-# Output the public IP addresses of the instances
-output "main_public_ip" {
-    value = aws_instance.main[0].public_ip
-    description = "The public IP address of the main node"
-}
-
-output "storage_public_ip" {
-    value = aws_instance.storage[*].public_ip
-    description = "The public IP address of the storage nodes"
-}
-
-
-# Generate inventory.ini file for Ansible
-resource "local_file" "ansible_inventory" {
-    content = templatefile("templates/inventory.tpl", {
-        main_ip = aws_instance.main[0].public_ip,
-        storage_ips = aws_instance.storage[*].public_ip
-    })
-    filename = "inventory.ini"
 }
