@@ -20,6 +20,8 @@ from fastapi.responses import StreamingResponse
 from lib.crypto import Crypto
 from lib.datatypes import EncryptedFile, EncryptedResponse, FileFragment
 from services.redis_service import RedisService
+from services.s3_service import s3Service
+
 
 load_dotenv()
 
@@ -96,12 +98,15 @@ async def upload_file(
             created_at=encrypted.created_at,
         )
 
-        fragments_to_save = [
-            FileFragment(uuid=str(uuid.uuid4()), fragment=fragment)
-            for fragment in encrypted.fragments
-        ]
+        for fragment in ecrypted.fragments:
+            s3.store_fragment(
+                file_uuid=encrypted.uuid,
+                fragment_index=fragment.index,
+                data=fragment.data,
+            )
 
-        redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragments_to_save)
+        fragment_idxs = [fragment.index for fragment in encrypted.fragments]
+        redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragment_idxs)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
