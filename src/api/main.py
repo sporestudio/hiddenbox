@@ -9,7 +9,6 @@ This module provides a FastAPI application for uploading and downloading encrypt
 
 import io
 import os
-import uuid
 from functools import lru_cache
 
 from cryptography.fernet import Fernet
@@ -21,7 +20,6 @@ from lib.crypto import Crypto
 from lib.datatypes import EncryptedFile, EncryptedResponse, FileFragment
 from services.redis_service import RedisService
 from services.s3_service import s3Service
-
 
 load_dotenv()
 
@@ -50,6 +48,13 @@ def get_redis() -> RedisService:
 
     return RedisService(url=REDIS_URL)
 
+@lru_cache
+def get_s3() -> s3Service:
+    """
+    Singleton pattern to handle S3 service connections.
+    """
+    return s3Service()
+
 app = FastAPI()
 
 # CORS middleware to allow requests from the frontend.
@@ -71,6 +76,7 @@ async def upload_file(
     file: UploadFile = File(...),
     crypto: Crypto = Depends(get_crypto),
     redis: RedisService = Depends(get_redis),
+    s3: s3Service = Depends(get_s3)
 ) -> EncryptedResponse:
     """
     Upload a file, encrypt it, and store its metadata and fragments in Redis.
@@ -98,12 +104,8 @@ async def upload_file(
             created_at=encrypted.created_at,
         )
 
-        for fragment in ecrypted.fragments:
-            s3.store_fragment(
-                file_uuid=encrypted.uuid,
-                fragment_index=fragment.index,
-                data=fragment.data,
-            )
+        for fragment in encrypted.fragments:
+            s3.store_fragment(encrypted.uuid, fragment.index, fragment.data)
 
         fragment_idxs = [fragment.index for fragment in encrypted.fragments]
         redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragment_idxs)
@@ -116,7 +118,7 @@ async def upload_file(
         user_id=encrypted.user_id,
         key=encrypted.key.decode(),
         created_at=encrypted.created_at,
-        fragments=fragments_to_save,
+        fragments=fragment_idxs,
     )
 
 @app.get("/download/{file_uuid}")
@@ -125,6 +127,7 @@ async def download_file(
     user_id: str,
     crypto: Crypto = Depends(get_crypto),
     redis: RedisService = Depends(get_redis),
+    s3: s3Service = Depends(get_s3)
 ) -> StreamingResponse:
     """
     Download a file by its UUID. The file is decrypted and streamed back to the client.
@@ -145,10 +148,11 @@ async def download_file(
         if not meta:
             raise HTTPException(status_code=404, detail="File not found")
 
-        raw = redis.get_fragments(file_uuid)
-        fragments = [
-            FileFragment(uuid=file_uuid, index=idx, data=frag) for idx, frag in raw
-        ]
+        fragment_idxs = redis.get_fragments(file_uuid)
+        fragments = []
+        for idx in fragment_idxs:
+            data = s3.get_fragment(file_uuid, idx)
+            fragments.append(FileFragment(uuid=file_uuid, index=idx, data=data))
 
         data = crypto.decrypt(fragments)
 
