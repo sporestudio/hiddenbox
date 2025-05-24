@@ -9,7 +9,6 @@ It uses the Boto3 library to interact with AWS S3.
 """
 
 import boto3
-import os
 
 class s3Service:
     def __init__(self):
@@ -37,7 +36,7 @@ class s3Service:
         key = f"{file_uuid}/fragment_{fragment_index}"
         self.s3.put_object(Bucket=self.bucket, Key=key, Body=data)
 
-    def get_fragments(self, file_uuid: str, fragment_index: int) -> bytes:
+    def get_fragment(self, file_uuid: str, fragment_index: int) -> bytes:
         """
         Retrieve a file fragment from S3.
 
