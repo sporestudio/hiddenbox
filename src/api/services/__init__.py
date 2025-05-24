@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from .redis import RedisService
+from .redis_service import RedisService
 
 __all__ = [
     "RedisService",

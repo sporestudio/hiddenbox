@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from lib.crypto import Crypto
 from lib.datatypes import EncryptedFile, EncryptedResponse, FileFragment
-from services.redis import RedisService
+from services.redis_service import RedisService
 
 load_dotenv()
 
