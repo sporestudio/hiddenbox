@@ -105,7 +105,7 @@ async def upload_file(
         )
 
         for fragment in encrypted.fragments:
-            s3.store_fragment(encrypted.uuid, fragment.index, fragment.data)
+            s3.store_fragment(user_id, encrypted.uuid, fragment.index, fragment.data)
 
         fragment_idxs = [fragment.index for fragment in encrypted.fragments]
         redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragment_idxs)
