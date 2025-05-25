@@ -8,7 +8,12 @@ This module provides a service for storing and retrieving file fragments in an S
 It uses the Boto3 library to interact with AWS S3.
 """
 
+import os
+
 import boto3
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class S3:
     def __init__(self):
@@ -18,7 +23,7 @@ class S3:
         Note: Ensure that the AWS credentials are set in the environment variables
         """
         self._s3 = boto3.client("s3")
-        self._bucket = "main_storage"
+        self._bucket = os.getenv("S3_BUCKET_NAME")
 
     def store_fragment(self, user_id: str, file_uuid: str, fragment_index: int, data: bytes) -> None:
         """
