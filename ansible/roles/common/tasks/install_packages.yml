@@ -1,0 +1,6 @@
+---
+- name: Install required packages
+  ansible.builtin.apt:
+    name: '{{ dependencies }}'
+    state: present
+    update_cache: true
