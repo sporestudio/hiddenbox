@@ -1,0 +1,5 @@
+---
+- name: Configure hostname to main node
+  become: true
+  ansible.builtin.hostname:
+    name: '{{ ansible_hostname }}'

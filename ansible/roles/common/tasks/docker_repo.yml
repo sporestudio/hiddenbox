@@ -1,0 +1,10 @@
+---
+- name: Add oficial gpg docker key
+  ansible.builtin.apt_key:
+    url: '{{ docker_url }}'
+    state: present
+
+- name: Add oficial docker repository
+  ansible.builtin.apt_repository:
+    repo: '{{ docker_repository }}'
+    state: present
