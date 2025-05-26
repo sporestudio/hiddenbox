@@ -145,7 +145,7 @@ resource "local_file" "ansible_inventory" {
   content = templatefile("${var.templates_path}/inventory.tpl", {
     instances = aws_instance.main
   })
-    filename = "${path.module}/ansible/inventory/inventory.ini"
+    filename = "${path.module}/ansible/inventory.ini"
     depends_on = [ aws_instance.main ]
 }
 
