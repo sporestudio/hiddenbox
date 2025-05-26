@@ -1,7 +1,7 @@
 [defaults]
-inventory = ./ansible/inventory
+inventory = ./inventory.ini
 remote_user = ${username}
-private_key_file = ~/.ssh/id_rsa.pub
+private_key_file = ~/.ssh/id_rsa
 host_key_checking = False
 nocows = 1
 
