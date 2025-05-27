@@ -38,7 +38,6 @@ Usage:
 """
 
 import redis
-
 from lib.datatypes import FileFragment
 
 class RedisService:
