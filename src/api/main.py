@@ -25,7 +25,7 @@ load_dotenv()
 
 REDIS_URL = os.getenv("REDIS_URL")
 WEB_URL = os.getenv("WEB_URL")
-FERNET_KEY = Fernet.generate_key()
+FERNET_KEY = Fernet.generate_key() # TODO: Generate a key for every user/file
 
 @lru_cache
 def get_crypto() -> Crypto:
@@ -36,7 +36,7 @@ def get_crypto() -> Crypto:
     if not FERNET_KEY:
         raise ValueError("Fernet Key not set")
 
-    return Crypto(key=FERNET_KEY.enconde())
+    return Crypto(key=FERNET_KEY)
 
 @lru_cache
 def get_redis() -> RedisService:
@@ -95,22 +95,25 @@ async def upload_file(
     data = await file.read()
 
     try:
-        encrypted: EncryptedFile = crypto.encrypt(data, user_id)
+        encrypted: EncryptedFile = crypto.encrypt(data, user_id, FERNET_KEY)
 
         redis.store_metadata(
             file_uuid=encrypted.uuid,
             user_id=encrypted.user_id,
             key=encrypted.key.decode(),
             created_at=encrypted.created_at,
+            filename=file.filename,
         )
 
+        fragment_idxs = []
         for fragment in encrypted.fragments:
-            s3.store_fragment(user_id, encrypted.uuid, fragment.index, fragment.data)
+            fragment_idxs.append(fragment.index)
+            s3.store_fragment(user_id, encrypted, fragment)
 
-        fragment_idxs = [fragment.index for fragment in encrypted.fragments]
-        redis.store_fragments(file_uuid=encrypted.uuid, fragments=fragment_idxs)
+        redis.store_fragments(file_uuid=encrypted.uuid, indexs=fragment_idxs)
 
     except Exception as e:
+        print(f"Error during upload: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
     return EncryptedResponse(
@@ -119,6 +122,7 @@ async def upload_file(
         key=encrypted.key.decode(),
         created_at=encrypted.created_at,
         fragments=fragment_idxs,
+        filename=file.filename,
     )
 
 @app.get("/download/{file_uuid}")
@@ -144,17 +148,22 @@ async def download_file(
     """
     try:
         meta = redis.get_metadata(file_uuid)
-
         if not meta:
             raise HTTPException(status_code=404, detail="File not found")
 
         fragment_idxs = redis.get_fragments(file_uuid)
+        if not fragment_idxs:
+            raise HTTPException(status_code=404, detail="No fragments found for this file")
+
         fragments = []
         for idx in fragment_idxs:
+            if isinstance(idx, FileFragment):
+                idx = idx.index
             data = s3.get_fragment(user_id, file_uuid, idx)
             fragments.append(FileFragment(uuid=file_uuid, index=idx, data=data))
 
-        data = crypto.decrypt(fragments)
+        data = crypto.decrypt(fragments, FERNET_KEY)
+        filename = meta.get('filename', f"{file_uuid}.zip")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -163,6 +172,6 @@ async def download_file(
         io.BytesIO(data),
         media_type="application/octet-stream",
         headers={
-            "Content-Disposition": f"attachment; filename={file_uuid}.zip"
+            "Content-Disposition": f"attachment; filename={filename}"
         }
     )
