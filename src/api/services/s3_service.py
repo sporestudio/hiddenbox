@@ -12,8 +12,9 @@ import os
 
 import boto3
 from dotenv import load_dotenv
-from .exceptions import BucketNotDefined, FragmentNotFound, S3OperationFailed
 from lib.datatypes import EncryptedFile, FileFragment
+
+from .exceptions import BucketNotDefined, FragmentNotFound, S3OperationFailed
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ class S3:
 
         if _bucket is None:
             raise BucketNotDefined()
-        
+
         self._bucket = _bucket
 
     def store_fragment(self, user_id: str, encrypted: EncryptedFile, fragment: FileFragment) -> None:
@@ -70,12 +71,12 @@ class S3:
             raise TypeError(f"Invalid fragment index: {fragment_index}")
 
         key = f"{user_id}/{file_uuid}/{fragment_index}.bin"
-        
+
         try:
             obj = self._s3.get_object(Bucket=self._bucket, Key=key)
             return obj["Body"].read()
-        
-        except self._s3.exceptions.NoSuchKey:
-            raise FragmentNotFound(fragment_key=key)
+
+        except self._s3.exceptions.NoSuchKey as e:
+            raise FragmentNotFound(fragment_key=key) from e
         except Exception as e:
             raise S3OperationFailed(operation="get_object") from e

@@ -13,7 +13,10 @@ class BucketNotDefined(Exception):
     """
     Exception raised when the S3 bucket name is not defined.
     """
-    def __init__(self, message="The environmental variable 'S3_BUCKET_NAME' must be defined to initialize an S3 instance."):
+    def __init__(
+            self,
+            message="The environmental variable 'S3_BUCKET_NAME' must be defined to initialize an S3 instance."
+        ):
         self.message = message
         super().__init__(self.message)
 
