@@ -45,7 +45,7 @@ class RedisService:
     def __init__(self, url):
         self._redis = redis.Redis.from_url(url)
 
-    def store_metadata(self, file_uuid: str, user_id: str, key: str, created_at: str) -> None:
+    def store_metadata(self, file_uuid: str, user_id: str, key: str, created_at: str, filename: str) -> None:
         """
         Save metadata of an encrypted file into Redis database.
 
@@ -55,13 +55,15 @@ class RedisService:
             key (str): Encryption key
             created_at (str): Timestamp of when the file was created
         """
-        self._redis.hset(f"file:{file_uuid}", mapping={
-            "user_id": user_id,
-            "key": key,
-            "created_at": created_at
-        })
+        metadata = {
+        "user_id": user_id,
+        "key": key,
+        "created_at": created_at,
+        "original_filename": filename,
+        }
+        self._redis.hset(f"file:{file_uuid}:metadata", mapping=metadata)
 
-    def store_fragments(self, file_uuid: str, fragments: list) -> None:
+    def store_fragments(self, file_uuid: str, indexs: list) -> None:
         """
         Save a list with the fragments' ids and their respective fragments.
 
@@ -69,10 +71,7 @@ class RedisService:
             file_uuid (str): File's unique identifier
             fragments (list[FileFragments]): List of FileFragments files objects
         """
-        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(f.index) for f in fragments])
-
-        for f in fragments:
-            self._redis.set(f"fragment:{file_uuid}:{f.index}", f.data)
+        self._redis.rpush(f"file:{file_uuid}:fragments", *[str(index) for index in indexs])
 
     def get_metadata(self, file_uuid: str) -> dict[str, str]:
         """
@@ -85,7 +84,7 @@ class RedisService:
             dict: A dictionary with the file's metadata. The keys are the field names
                   and the values are the field values.
         """
-        data = self._redis.hgetall(f"file:{file_uuid}")
+        data = self._redis.hgetall(f"file:{file_uuid}:metadata")
 
         if not data:
             return {}
