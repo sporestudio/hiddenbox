@@ -62,3 +62,4 @@ class EncryptedResponse:
     key: str
     created_at: str
     fragments: list[FileFragment]
+    filename: str
