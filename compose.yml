@@ -33,8 +33,12 @@ services:
     build:
       context: ./src/api
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: api
     restart: unless-stopped
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
     ports:
       - "8000:8000"
     env_file: 

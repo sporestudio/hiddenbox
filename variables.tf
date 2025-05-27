@@ -75,9 +75,3 @@ variable "storage_volume_size" {
   type        = number
   default     = 100
 }
-
-variable "templates_path" {
-  description = "Path to the templates directory"
-  type        = string
-  default     = "${path.module}/templates"
-}

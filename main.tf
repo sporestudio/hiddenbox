@@ -16,6 +16,12 @@ provider "aws" {
     region = var.region
 }
 
+locals {
+  paths = {
+    templates = "${path.module}/templates"
+  }
+}
+
 data "aws_vpc" "default" {
     default = true
 }
@@ -114,6 +120,11 @@ resource "aws_security_group" "main" {
 }
 
 # Key pair for SSH access
+resource "aws_key_pair" "main" {
+    key_name   = "main_key"
+    public_key = file(var.ssh_public_key_path)
+}
+
 resource "aws_key_pair" "ansible_key" {
     key_name   = "ansible_key"
     public_key = file(var.ssh_public_key_path)
@@ -142,7 +153,7 @@ resource "aws_instance" "main" {
 
 # Dynamic files
 resource "local_file" "ansible_inventory" {
-  content = templatefile("${var.templates_path}/inventory.tpl", {
+  content = templatefile("${local.paths.templates}/inventory.tpl", {
     instances = aws_instance.main
   })
     filename = "${path.module}/ansible/inventory.ini"
@@ -150,7 +161,7 @@ resource "local_file" "ansible_inventory" {
 }
 
 resource "local_file" "ansible_cfg" {
-  content = templatefile("${var.templates_path}/ansible_cfg.tpl", {
+  content = templatefile("${local.paths.templates}/ansible_cfg.tpl", {
     username = var.user
   })
   filename = "${path.module}/ansible/ansible.cfg"
