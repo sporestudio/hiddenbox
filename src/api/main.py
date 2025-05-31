@@ -140,7 +140,7 @@ async def list_files(user_id: str, redis: RedisService = Depends(get_redis)) -> 
         files = redis.list_files(user_id)
         return files
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @app.get("/download/{file_uuid}")
 async def download_file(

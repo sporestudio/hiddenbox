@@ -109,7 +109,7 @@ class RedisService:
             result.append(FileFragment(index=idx, data=frag_data, uuid=file_uuid))
 
         return result
-    
+
     def list_files(self, user_id: str) -> list[dict]:
         """
         List all files uploaded by a user.
@@ -132,7 +132,7 @@ class RedisService:
 
             if decoded_metadata.get("user_id") == user_id:
                 files.append({
-                    "uuid": key_str.split(":")[1], 
+                    "uuid": key_str.split(":")[1],
                     "filename": decoded_metadata.get("original_filename"),
                     "fragments": [],
                     "user_id": decoded_metadata.get("user_id"),
