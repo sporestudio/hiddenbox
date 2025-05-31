@@ -125,6 +125,23 @@ async def upload_file(
         filename=file.filename,
     )
 
+@app.get("/files/{user_id}", response_model=list[EncryptedResponse])
+async def list_files(user_id: str, redis: RedisService = Depends(get_redis)) -> list[dict]:
+    """
+    List all files uploaded by a user.
+
+    Args:
+        user_id (str): The user ID.
+
+    Returns:
+        list[dict]: A list of file metadata.
+    """
+    try:
+        files = redis.list_files(user_id)
+        return files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/download/{file_uuid}")
 async def download_file(
     file_uuid: str,
