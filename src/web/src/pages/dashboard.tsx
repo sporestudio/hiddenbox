@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Upload, File, Folder, FileText,
   Trash2, Download, LogOut, Search
@@ -26,37 +27,84 @@ const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const demoFiles: FileItem[] = [
-      { id: '1', name: 'Project Report.pdf', size: '2.4 MB', type: 'pdf', lastModified: '2025-04-10', encrypted: true },
-      { id: '2', name: 'Financial Data.xlsx', size: '1.8 MB', type: 'xlsx', lastModified: '2025-04-08', encrypted: true },
-      { id: '3', name: 'Meeting Notes.docx', size: '0.5 MB', type: 'docx', lastModified: '2025-04-12', encrypted: true },
-      { id: '4', name: 'Profile Picture.jpg', size: '3.2 MB', type: 'jpg', lastModified: '2025-04-01', encrypted: true },
-      { id: '5', name: 'Source Code.zip', size: '15.7 MB', type: 'zip', lastModified: '2025-04-14', encrypted: true },
-    ];
-    setFiles(demoFiles);
+    const fetchFiles = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/files/testuser'); // Cambiar por el ID real del usuario
+        console.log('Response from API:', response.data); // Agrega un log para verificar la respuesta
+  
+        const fetchedFiles = response.data.map((file: any) => ({
+          id: file.uuid,
+          name: file.filename,
+          size: 'Unknown', // Si el tamaño no está disponible, puedes usar un valor predeterminado
+          type: file.filename.split('.').pop(),
+          lastModified: new Date(parseInt(file.created_at) * 1000).toISOString().split('T')[0],
+          encrypted: true,
+        }));
+  
+        setFiles(fetchedFiles);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      }
+    };
+  
+    fetchFiles();
   }, []);
 
-  const handleUpload = () => {
-    setIsUploading(true);
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setIsUploading(false);
-        setUploadProgress(0);
-        const newFile: FileItem = {
-          id: `${Date.now()}`,
-          name: `UploadedFile_${Math.floor(Math.random() * 1000)}.pdf`,
-          size: `${(Math.random() * 10).toFixed(1)} MB`,
-          type: 'pdf',
-          lastModified: new Date().toISOString().split('T')[0],
-          encrypted: true,
-        };
-        setFiles((prev) => [newFile, ...prev]);
-      }
-    }, 100);
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('user_id', 'testuser'); // Cambiar por el ID real del usuario
+
+    try {
+      setIsUploading(true);
+      const response = await axios.post('http://localhost:8000/upload', formData, {
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+          setUploadProgress(progress);
+        },
+      });
+
+      // Agregar el archivo subido a la lista de archivos
+      const newFile: FileItem = {
+        id: response.data.uuid,
+        name: response.data.filename,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        type: file.type.split('/')[1],
+        lastModified: new Date().toISOString().split('T')[0],
+        encrypted: true,
+      };
+      setFiles((prev) => [newFile, ...prev]);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDownload = async (fileId: string, fileName: string) => {
+    try {
+      const response = await axios.get(`http://localhost:8000/download/${fileId}`, {
+        params: { user_id: 'testuser' },
+        responseType: 'blob',
+      });
+
+      // Crear un enlace para descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName); // Usa el nombre original del archivo
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
   };
 
   const filteredFiles = files.filter((f) =>
@@ -101,17 +149,14 @@ const Dashboard: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-
                 {/* Buttons */}
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  
+                <div className="flex flex-col md:flex-row items-center gap-4">      
                   {/* Upload Files */}
                   <label className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md cursor-pointer bg-gray-200 hover:bg-gray-300 text-black w-full md:w-auto">
                     <Upload size={18} />
                     <span>Upload Files</span>
                     <input type="file" className="hidden" onChange={handleUpload} />
                   </label>
-
                   {/* Logout */}
                   <button
                     onClick={handleLogout}
@@ -168,7 +213,10 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 rounded-full cursor-pointer">
+                        <button 
+                          className="p-2 rounded-full cursor-pointer"
+                          onClick={() => handleDownload(file.id, file.name)}
+                        >
                           <Download size={18} />
                         </button>
                         <button className="p-2 rounded-full cursor-pointer">

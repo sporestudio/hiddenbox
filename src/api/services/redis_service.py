@@ -109,3 +109,35 @@ class RedisService:
             result.append(FileFragment(index=idx, data=frag_data, uuid=file_uuid))
 
         return result
+
+    def list_files(self, user_id: str) -> list[dict]:
+        """
+        List all files uploaded by a user.
+
+        Args:
+            user_id (str): The user ID.
+
+        Returns:
+            list[dict]: A list of file metadata dictionaries.
+        """
+        keys = self._redis.keys("file:*:metadata")
+        files = []
+
+        for key in keys:
+            key_str = key.decode() # Decode the key from bytes to string
+            metadata = self._redis.hgetall(key)
+            decoded_metadata = {k.decode(): v.decode() for k, v in metadata.items()}
+            print(f"Key: {key}, Decoded Key: {key_str}")
+            print(f"Metadata: {decoded_metadata}")
+
+            if decoded_metadata.get("user_id") == user_id:
+                files.append({
+                    "uuid": key_str.split(":")[1],
+                    "filename": decoded_metadata.get("original_filename"),
+                    "fragments": [],
+                    "user_id": decoded_metadata.get("user_id"),
+                    "key": decoded_metadata.get("key"),
+                    "created_at": decoded_metadata.get("created_at"),
+                })
+
+        return files
