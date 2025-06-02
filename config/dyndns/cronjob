@@ -1,0 +1,1 @@
+* * * * * root /usr/bin/flock /tmp/ipupdate.lck ./update.sh 2>&1 >> /var/log/cron.log

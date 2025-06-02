@@ -1,4 +1,13 @@
 services:
+  dyndns:
+    build:
+      context: ./config/dyndns
+      dockerfile: Dockerfile
+    container_name: dyndns
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
   redis:
     build:
       context: ./config/redis
