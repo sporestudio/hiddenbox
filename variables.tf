@@ -1,3 +1,9 @@
+variable "project_name" {
+  description = "Project name"
+  type = string
+  default = "hiddenbox"
+}
+
 variable "aws_access_key_id" {
   description = "AWS Access Key ID"
   type = string
@@ -16,6 +22,12 @@ variable "aws_session_token" {
   sensitive = true
 }
 
+variable "aws_credentials" {
+  description = "Path for aws credentials"
+  type = string
+  default = "$HOME/.aws/credentials"
+}
+
 variable "region" {
   description = "AWS region"
   type = string
@@ -31,7 +43,7 @@ variable "ubuntu_ami" {
 variable "user" {
   description = "The user data to provide when launching the instance"
   type = string
-  default = "provisioner"
+  default = "ubuntu"
 }
 
 variable "ssh_public_key_path" {
